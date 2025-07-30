@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grocery Tycoon</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff9f0;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #home {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 0.2em;
+    }
+
+    button {
+      padding: 1em 2em;
+      font-size: 1.5em;
+      border: none;
+      border-radius: 10px;
+      background: #ffc107;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #game {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #topbar {
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(6, 60px);
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #shop {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      max-width: 300px;
+    }
+
+    .shop-item {
+      background: #f1f1f1;
+      padding: 8px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+
+    .shop-item:hover {
+      background: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div id="home">
+    <h1>🍏 Grocery Tycoon</h1>
+    <button onclick="startGame()">▶ Play</button>
+  </div>
+
+  <div id="game">
+    <div id="topbar">
+      💵 <span id="money">25</span> | ⏰ Next paycheck in <span id="timer">60</span>s
+    </div>
+    <div id="grid"></div>
+    <div id="shop"></div>
+  </div>
+
+  <script>
+    const items = [
+      { name: "Apple", emoji: "🍎", cost: 5, income: 10 },
+      { name: "Watermelon", emoji: "🍉", cost: 20, income: 50 },
+      { name: "Bread", emoji: "🍞", cost: 100, income: 250 },
+      { name: "Cheese", emoji: "🧀", cost: 1000, income: 2000 },
+      { name: "Bagel", emoji: "🥯", cost: 5000, income: 10000 },
+      { name: "Hot Dog", emoji: "🌭", cost: 50000, income: 100000 },
+      { name: "Burger", emoji: "🍔", cost: 750000, income: 1000000 },
+      { name: "Taco", emoji: "🌮", cost: 20000000, income: 25000000 },
+      { name: "Pizza", emoji: "🍕", cost: 250000000, income: 250000000 },
+      { name: "Ice Cream", emoji: "🍦", cost: 2000000000, income: 500000000 },
+    ];
+
+    let money = 25;
+    let timer = 60;
+    let selectedItem = null;
+    let gridData = Array(36).fill(null);
+
+    function startGame() {
+      document.getElementById("home").style.display = "none";
+      document.getElementById("game").style.display = "flex";
+      renderGrid();
+      renderShop();
+      setInterval(gameTick, 1000);
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+      for (let i = 0; i < 36; i++) {
+        const div = document.createElement("div");
+        div.className = "cell";
+        div.innerHTML = gridData[i]?.emoji || "";
+        div.onclick = () => {
+          if (selectedItem && !gridData[i] && money >= selectedItem.cost) {
+            gridData[i] = selectedItem;
+            money -= selectedItem.cost;
+            updateMoney();
+            renderGrid();
+          }
+        };
+        grid.appendChild(div);
+      }
+    }
+
+    function renderShop() {
+      const shop = document.getElementById("shop");
+      shop.innerHTML = "";
+      items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "shop-item";
+        div.innerHTML = `${item.emoji} ${item.name}<br>$${item.cost} | +$${item.income}/min`;
+        div.onclick = () => {
+          selectedItem = item;
+        };
+        shop.appendChild(div);
+      });
+    }
+
+    function updateMoney() {
+      document.getElementById("money").innerText = Math.floor(money).toLocaleString();
+    }
+
+    function gameTick() {
+      timer--;
+      document.getElementById("timer").innerText = timer;
+      if (timer <= 0) {
+        const totalIncome = gridData.reduce((sum, item) => sum + (item?.income || 0), 0);
+        money += totalIncome;
+        updateMoney();
+        timer = 60;
+      }
+    }
+  </script>
+</body>
+</html>
