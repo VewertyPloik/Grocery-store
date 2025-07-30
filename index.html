@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grocery Tycoon</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background: #f2f2f2;
+    }
+    h1 { margin-top: 20px; }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(5, 80px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .tile {
+      width: 80px;
+      height: 80px;
+      background: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      cursor: pointer;
+    }
+    .shop {
+      margin-top: 20px;
+    }
+    .item {
+      margin: 5px;
+    }
+    #stats {
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Grocery Store Tycoon</h1>
+  <div id="stats">
+    <p>💰 Money: $<span id="money">0</span></p>
+    <p>🕐 Earnings per minute: $<span id="earnings">0</span></p>
+  </div>
+  <div id="game"></div>
+
+  <div class="shop">
+    <h2>🛒 Shop</h2>
+    <div class="item"><button onclick="buy('🍎')">🍎 $5 (Earns $10/min)</button></div>
+    <div class="item"><button onclick="buy('🍉')">🍉 $20 (Earns $50/min)</button></div>
+    <div class="item"><button onclick="buy('🍞')">🍞 $100 (Earns $250/min)</button></div>
+    <div class="item"><button onclick="buy('🧀')">🧀 $1000 (Earns $2000/min)</button></div>
+    <div class="item"><button onclick="buy('🥯')">🥯 $5000 (Earns $10K/min)</button></div>
+    <div class="item"><button onclick="buy('🌭')">🌭 $50K (Earns $100K/min)</button></div>
+    <div class="item"><button onclick="buy('🍔')">🍔 $750K (Earns $1M/min)</button></div>
+  </div>
+
+  <script>
+    const gridSize = 25;
+    const game = document.getElementById("game");
+    const moneyDisplay = document.getElementById("money");
+    const earningsDisplay = document.getElementById("earnings");
+
+    const items = {
+      "🍎": { cost: 5, earn: 10 },
+      "🍉": { cost: 20, earn: 50 },
+      "🍞": { cost: 100, earn: 250 },
+      "🧀": { cost: 1000, earn: 2000 },
+      "🥯": { cost: 5000, earn: 10000 },
+      "🌭": { cost: 50000, earn: 100000 },
+      "🍔": { cost: 750000, earn: 1000000 },
+    };
+
+    let grid = Array(gridSize).fill(null);
+    let money = 0;
+    let earnings = 0;
+
+    function updateStats() {
+      moneyDisplay.textContent = Math.floor(money);
+      earnings = grid.reduce((sum, item) => item ? sum + items[item].earn : sum, 0);
+      earningsDisplay.textContent = earnings;
+    }
+
+    function renderGrid() {
+      game.innerHTML = "";
+      grid.forEach((item, i) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.textContent = item || "";
+        tile.onclick = () => {
+          if (item) {
+            if (confirm("Sell this item? You will get half back.")) {
+              money += items[item].cost / 2;
+              grid[i] = null;
+              saveGame();
+              updateStats();
+              renderGrid();
+            }
+          }
+        };
+        game.appendChild(tile);
+      });
+    }
+
+    function buy(emoji) {
+      const index = grid.indexOf(null);
+      if (index === -1) return alert("Grid full!");
+      const item = items[emoji];
+      if (money >= item.cost) {
+        money -= item.cost;
+        grid[index] = emoji;
+        saveGame();
+        updateStats();
+        renderGrid();
+      } else {
+        alert("Not enough money!");
+      }
+    }
+
+    function earnMoney() {
+      money += earnings / 60; // Every second
+      updateStats();
+      saveGame();
+    }
+
+    function saveGame() {
+      const saveData = {
+        grid,
+        money,
+        lastTime: Date.now()
+      };
+      localStorage.setItem("grocerySave", JSON.stringify(saveData));
+    }
+
+    function loadGame() {
+      const save = JSON.parse(localStorage.getItem("grocerySave"));
+      if (save) {
+        grid = save.grid || grid;
+        money = save.money || 0;
+        const now = Date.now();
+        const diffMin = Math.floor((now - (save.lastTime || now)) / 60000);
+        const offlineEarnings = earnings * 0.10 * diffMin;
+        if (diffMin > 0) {
+          money += offlineEarnings;
+          alert(`Welcome back! You earned $${Math.floor(offlineEarnings)} while offline.`);
+        }
+      }
+    }
+
+    loadGame();
+    updateStats();
+    renderGrid();
+    setInterval(earnMoney, 1000); // every second
+  </script>
+</body>
+</html>
